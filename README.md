@@ -201,7 +201,47 @@
     ![Alt text](image-49.png)
     
 
-    6. 正确绑定的情况下实际运行效果如下图：
+    **正确绑定的情况下实际运行效果如下图：**
     ![Alt text](image-50.png)  
 
-    **完整的机器人绑定过程可参考CDD14的BP**
+    **完整的机器人绑定过程可参考CDD14的BP**  
+
+  * ## 库位校准  
+    * ### 库位校准的时机  
+      **在AgvManager的BeginPlay()开启一个定时器，会一秒检查一次是否满足库位校准的条件(成功请求scene接口并且库位创建完成)，如果满足就进行库位校准。库位校准的方法是RefreshBinsTransform()，校准完成后销毁该定时器**
+      ![Alt text](image-51.png)  
+
+      ![Alt text](image-52.png)  
+
+    * ### 库位校准的原理  
+      **库位校准的核心原理是：把机器人放到指定的站点，然后根据机器人正常取放货时库位与机器人的相对偏差(稍后会介绍如何确定这个偏差)，计算出机器人在该站点取放货时库位的位置。注意，这个位置不包含Z轴坐标，Z轴坐标根据库位创建的高度决定。(其实就是相对坐标转世界坐标)。**  
+      #### 计算校准坐标的方法是  
+      #### bool AAGVManager::GetAgvGoodsOffset(const ERobotType& agvType, const FStationInfo& stationInfo,FVector& outLoc,FRotator& outRot,const AActor* parentAct)  
+      ![Alt text](image-59.png)
+      agvType：需要校准的站点的机器人类型(即按照哪一种机器人的偏差来进行校准)。  
+
+      stationInfo：需要校准的站点信息(即在哪里进行校准)。  
+
+      outLoc：校准后库位的位置。  
+
+      outRot：校准后库位的旋转。  
+
+      parentAct：机器人的父Actor，通过机器人的父Actor可以得到机器人在该站点的世界位置。  
+
+    * ### 确定库位与机器人的相对偏差  
+      #### 以CDD14为例介绍确定方法：
+      #### 1. 打开机器人BP并显示货物  
+      ![Alt text](image-53.png)  
+
+      #### 2. 添加ChildActor组件，并将class设置为要校准的库位的BP，并且显示库位的货物  
+      ![Alt text](image-55.png)  
+
+      #### 3. 调整ChildActor组件的位置和旋转，使其和机器人身上的货物重合。记录下此时ChildActor的位置和旋转，即为库位与机器人的相对偏差。  
+      ![Alt text](image-56.png)  
+
+      #### 4. 将记录的偏差保存到机器人的配置信息中。
+      ![Alt text](image-57.png)  
+
+      #### 5. 删除机器人BP中的ChildActor组件，使机器人恢复到默认状态，至此机器人偏差确定完成。  
+      ![Alt text](image-58.png)
+     
